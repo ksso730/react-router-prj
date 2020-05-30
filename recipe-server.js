@@ -32,6 +32,8 @@ app.all('/*', function(req, res, next) {
 * DBCollection dbc = db.get()
 */
 const Client = require("mongodb").MongoClient;
+const URL = "mongodb://211.238.142.181:27017";
+
 app.get('/recipe', (request, response)=>{
     // request => 사용자가 보낸 요청 : page, id, pwd
     // 요청 처리
@@ -42,8 +44,7 @@ app.get('/recipe', (request, response)=>{
     // 1page => skip=0
     // 2page => skip 12(버림) ==> 13
 
-    var url = "mongodb://211.238.142.181:27017";
-    Client.connect(url, (err, client)=>{
+    Client.connect(URL, (err, client)=>{
         var db = client.db('mydb');
         // SELECT * FROM recipe => find{()}
         // SELECT * FROM recipe WHERE no=1 => find{(no:1)}
@@ -60,7 +61,30 @@ app.get('/recipe', (request, response)=>{
             });
     })
 
+app.get('/recipe-total', (request, response)=>{
+    Client.connect(URL, (err, client)=>{
+        var db = client.db('mydb');
+        db.collection('recipe').find({}).count((err, count)=>{
+            response.json({total: Math.ceil(count/12.0)})
+            client.close();
+            return count;
+        })
+    });
+})
 
+    // recipe-detail?no=1
+app.get('/recipe-detail', (request, response)=>{
+    // 파라미터를 받는 방법
+    var no = request.query.no;
+    Client.connect(URL, (err, client)=>{
+        var db = client.db('mydb');
+        // 형변환 : Number() or parseInt()
+        db.collection('recipe_detail').find({no:Number(no)}).toArray((err, docs)=>{
+            response.json(docs[0]);
+            client.close();
+        })
+    });
+})
 
 
 
